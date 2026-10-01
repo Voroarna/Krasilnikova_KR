@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Мониторинг доступности облачного приложения</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, #16243d 0%, transparent 35%),
+                radial-gradient(circle at top right, #1b2434 0%, transparent 30%),
+                #0b1120;
+            color: #e5e7eb;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 36px 24px 60px;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #2d3b52;
+            border-radius: 999px;
+            color: #93c5fd;
+            background: rgba(37, 99, 235, 0.08);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 12px #22c55e;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 36px;
+            line-height: 1.15;
+            color: #f8fafc;
+        }
+
+        .subtitle {
+            margin-top: 10px;
+            color: #94a3b8;
+            max-width: 850px;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.86);
+            border: 1px solid #243247;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+        }
+
+        .card-label {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+
+        .small-value {
+            font-size: 21px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 14px currentColor;
+            background: currentColor;
+        }
+
+        .green {
+            color: #22c55e;
+        }
+
+        .red {
+            color: #ef4444;
+        }
+
+        .orange {
+            color: #f59e0b;
+        }
+
+        .blue {
+            color: #60a5fa;
+        }
+
+        .secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid #243247;
+            border-radius: 16px;
+            padding: 18px 20px;
+        }
+
+        .metric-title {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .metric-number {
+            font-size: 27px;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+
+        .controls {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid #243247;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .controls-title {
+            margin: 0 0 14px 0;
+            font-size: 16px;
+            color: #f8fafc;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.08);
+        }
+
+        .btn-check {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-load {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-network {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-restore {
+            background: #16a34a;
+            color: white;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.45fr 0.85fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(15, 23, 42, 0.84);
+            border: 1px solid #243247;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .panel h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #f8fafc;
+        }
+
+        .panel-subtitle {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .chart-wrap {
+            height: 320px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .log {
+            background: #080d18;
+            border: 1px solid #1d2939;
+            border-radius: 14px;
+            padding: 14px;
+            height: 320px;
+            overflow-y: auto;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.07);
+            color: #cbd5e1;
+        }
+
+        .log-time {
+            color: #64748b;
+            margin-right: 8px;
+        }
+
+        .log-success {
+            color: #86efac;
+        }
+
+        .log-warning {
+            color: #fde68a;
+        }
+
+        .log-error {
+            color: #fca5a5;
+        }
+
+        .footer-note {
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        @media (max-width: 950px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .secondary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .container {
+                padding: 22px 14px 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <div class="eyebrow">
+            <span class="pulse"></span>
+            Автоматический мониторинг · 2 сек
+        </div>
+
+        <h1>
+            Мониторинг доступности облачного приложения
+        </h1>
+
+        <div class="subtitle">
+            Интерактивная модель контроля основного и резервного экземпляров,
+            обнаружения отказа и автоматического переключения
+            на работоспособный сервер.
+        </div>
+
+    </div>
+
+
+    <!-- Основные показатели -->
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-label">
+                Основной сервер
+            </div>
+
+            <div id="mainStatus"
+                 class="card-value status green">
+
+                <span class="dot"></span>
+                <span>Доступен</span>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-label">
+                Резервный сервер
+            </div>
+
+            <div id="backupStatus"
+                 class="card-value status green">
+
+                <span class="dot"></span>
+                <span>Доступен</span>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-label">
+                Активный экземпляр
+            </div>
+
+            <div id="activeServer"
+                 class="card-value small-value">
+
+                Основной
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-label">
+                Текущее время ответа
+            </div>
+
+            <div id="responseTime"
+                 class="card-value">
+
+                110 мс
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Дополнительные метрики -->
+
+    <div class="secondary-grid">
+
+        <div class="metric-card">
+
+            <div class="metric-title">
+                Доступность сервиса
+            </div>
+
+            <div id="availability"
+                 class="metric-number green">
+
+                100.0%
+
+            </div>
+
+        </div>
+
+
+        <div class="metric-card">
+
+            <div class="metric-title">
+                Переключений на резерв
+            </div>
+
+            <div id="switchCount"
+                 class="metric-number">
+
+                0
+
+            </div>
+
+        </div>
+
+
+        <div class="metric-card">
+
+            <div class="metric-title">
+                Последняя проверка
+            </div>
+
+            <div id="lastCheck"
+                 class="metric-number blue">
+
+                —
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Управление -->
+
+    <div class="controls">
+
+        <h2 class="controls-title">
+            Управление моделью
+        </h2>
+
+        <div class="buttons">
+
+            <button class="btn-check"
+                    onclick="checkStatus()">
+
+                Проверить состояние
+
+            </button>
+
+
+            <button class="btn-load"
+                    onclick="simulateLoad()">
+
+                Повышенная нагрузка
+
+            </button>
+
+
+            <button class="btn-network"
+                    onclick="simulateNetworkFailure()">
+
+                Нарушить сетевую доступность
+
+            </button>
+
+
+            <button class="btn-restore"
+                    onclick="restoreServer()">
+
+                Восстановить основной сервер
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- График + журнал -->
+
+    <div class="content-grid">
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        Динамика времени ответа
+                    </h2>
+
+                    <div class="panel-subtitle">
+                        Последние 14 автоматических проверок, мс
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="chart-wrap">
+
+                <canvas id="responseChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        Журнал событий
+                    </h2>
+
+                    <div class="panel-subtitle">
+                        Проверки, отказы и переключения
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="log"
+                 id="eventLog">
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer-note">
+        Красильникова А.А. · DevOps25-2м
+    </div>
+
+</div>
+
+
+<script>
+
+    // -----------------------------
+    // Состояние модели
+    // -----------------------------
+
+    let responseHistory =
+        [102, 111, 106, 119, 109, 114, 105, 112];
+
+    let switchCount = 0;
+
+    let totalChecks =
+        responseHistory.length;
+
+    let failedChecks = 0;
+
+    let mainAvailable = true;
+
+    let simulationRunning = false;
+
+    let automaticCheckNumber = 0;
+
+
+    // -----------------------------
+    // Время
+    // -----------------------------
+
+    function timeNow() {
+
+        return new Date().toLocaleTimeString(
+            "ru-RU",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
+
+    }
+
+
+    // -----------------------------
+    // Журнал
+    // -----------------------------
+
+    function addLog(text, type = "normal") {
+
+        const log =
+            document.getElementById("eventLog");
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "log-entry";
+
+
+        const time =
+            document.createElement("span");
+
+        time.className =
+            "log-time";
+
+        time.textContent =
+            timeNow();
+
+
+        const message =
+            document.createElement("span");
+
+
+        if (type === "success") {
+
+            message.className =
+                "log-success";
+
+        }
+
+
+        if (type === "warning") {
+
+            message.className =
+                "log-warning";
+
+        }
+
+
+        if (type === "error") {
+
+            message.className =
+                "log-error";
+
+        }
+
+
+        message.textContent =
+            "— " + text;
+
+
+        row.appendChild(time);
+
+        row.appendChild(message);
+
+
+        log.prepend(row);
+
+    }
+
+
+    // -----------------------------
+    // Статус основного сервера
+    // -----------------------------
+
+    function setMainStatus(available) {
+
+        const container =
+            document.getElementById(
+                "mainStatus"
+            );
+
+
+        if (available) {
+
+            container.className =
+                "card-value status green";
+
+            container.innerHTML =
+                '<span class="dot"></span>' +
+                '<span>Доступен</span>';
+
+        }
+
+        else {
+
+            container.className =
+                "card-value status red";
+
+            container.innerHTML =
+                '<span class="dot"></span>' +
+                '<span>Недоступен</span>';
+
+        }
+
+    }
+
+
+    // -----------------------------
+    // Последняя проверка
+    // -----------------------------
+
+    function updateLastCheck() {
+
+        document.getElementById(
+            "lastCheck"
+        ).textContent =
+            timeNow();
+
+    }
+
+
+    // -----------------------------
+    // Доступность
+    // -----------------------------
+
+    function updateAvailability() {
+
+        let value =
+            (
+                (
+                    totalChecks -
+                    failedChecks
+                )
+                /
+                totalChecks
+            )
+            * 100;
+
+
+        if (!Number.isFinite(value)) {
+
+            value = 100;
+
+        }
+
+
+        if (value < 0) {
+
+            value = 0;
+
+        }
+
+
+        document.getElementById(
+            "availability"
+        ).textContent =
+            value.toFixed(1) + "%";
+
+    }
+
+
+    // -----------------------------
+    // Добавление значения
+    // -----------------------------
+
+    function addResponseValue(value) {
+
+        responseHistory.push(value);
+
+
+        if (
+            responseHistory.length > 14
+        ) {
+
+            responseHistory.shift();
+
+        }
+
+
+        document.getElementById(
+            "responseTime"
+        ).textContent =
+            value + " мс";
+
+
+        drawChart();
+
+    }
+
+
+    // -----------------------------
+    // Автоматический health-check
+    // -----------------------------
+
+    function automaticMonitor() {
+
+        // Во время сценария нагрузки
+        // обычные проверки временно пропускаем
+
+        if (simulationRunning) {
+
+            return;
+
+        }
+
+
+        totalChecks++;
+
+        automaticCheckNumber++;
+
+
+        let value;
+
+
+        if (mainAvailable) {
+
+            value =
+                Math.floor(
+                    Math.random() * 36
+                )
+                + 90;
+
+        }
+
+        else {
+
+            value =
+                Math.floor(
+                    Math.random() * 36
+                )
+                + 135;
+
+        }
+
+
+        addResponseValue(value);
+
+        updateLastCheck();
+
+        updateAvailability();
+
+
+        // Чтобы журнал не заполнялся
+        // слишком быстро, записываем
+        // каждую третью автоматическую проверку
+
+        if (
+            automaticCheckNumber % 3 === 0
+        ) {
+
+            if (mainAvailable) {
+
+                addLog(
+                    "Health-check: основной сервер доступен, " +
+                    "время ответа " +
+                    value +
+                    " мс.",
+                    "success"
+                );
+
+            }
+
+            else {
+
+                addLog(
+                    "Health-check: запрос обслужен резервным сервером, " +
+                    "время ответа " +
+                    value +
+                    " мс.",
+                    "warning"
+                );
+
+            }
+
+        }
+
+    }
+
+
+    // -----------------------------
+    // Ручная проверка
+    // -----------------------------
+
+    function checkStatus() {
+
+        totalChecks++;
+
+
+        let value;
+
+
+        if (mainAvailable) {
+
+            value =
+                Math.floor(
+                    Math.random() * 35
+                )
+                + 90;
+
+
+            addLog(
+                "Выполнена ручная проверка. " +
+                "Основной сервер доступен. " +
+                "Время ответа: " +
+                value +
+                " мс.",
+                "success"
+            );
+
+        }
+
+        else {
+
+            value =
+                Math.floor(
+                    Math.random() * 35
+                )
+                + 135;
+
+
+            addLog(
+                "Выполнена ручная проверка через резервный сервер. " +
+                "Время ответа: " +
+                value +
+                " мс.",
+                "warning"
+            );
+
+        }
+
+
+        addResponseValue(value);
+
+        updateLastCheck();
+
+        updateAvailability();
+
+    }
+
+
+    // -----------------------------
+    // Сценарий 1:
+    // повышенная нагрузка
+    // -----------------------------
+
+    function simulateLoad() {
+
+        if (simulationRunning) {
+
+            return;
+
+        }
+
+
+        if (!mainAvailable) {
+
+            addLog(
+                "Основной сервер уже недоступен. " +
+                "Сначала выполните восстановление.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        simulationRunning = true;
+
+
+        addLog(
+            "Начато моделирование повышенной внешней нагрузки.",
+            "warning"
+        );
+
+
+        const loadValues =
+            [
+                155,
+                215,
+                290,
+                380,
+                490
+            ];
+
+
+        let index = 0;
+
+
+        const interval =
+            setInterval(
+                function () {
+
+                    const value =
+                        loadValues[index];
+
+
+                    totalChecks++;
+
+
+                    addResponseValue(
+                        value
+                    );
+
+
+                    updateLastCheck();
+
+
+                    addLog(
+                        "Рост нагрузки. " +
+                        "Время ответа: " +
+                        value +
+                        " мс.",
+                        "warning"
+                    );
+
+
+                    index++;
+
+
+                    if (
+                        index >=
+                        loadValues.length
+                    ) {
+
+                        clearInterval(
+                            interval
+                        );
+
+
+                        failedChecks++;
+
+                        mainAvailable =
+                            false;
+
+
+                        setMainStatus(
+                            false
+                        );
+
+
+                        document.getElementById(
+                            "activeServer"
+                        ).textContent =
+                            "Резервный";
+
+
+                        switchCount++;
+
+
+                        document.getElementById(
+                            "switchCount"
+                        ).textContent =
+                            switchCount;
+
+
+                        updateAvailability();
+
+
+                        addLog(
+                            "Основной сервер превысил допустимое время ответа.",
+                            "error"
+                        );
+
+
+                        addLog(
+                            "Основной экземпляр признан недоступным.",
+                            "error"
+                        );
+
+
+                        addLog(
+                            "Выполнено автоматическое переключение " +
+                            "на резервный сервер.",
+                            "success"
+                        );
+
+
+                        setTimeout(
+                            function () {
+
+                                const reserveTime =
+                                    145;
+
+
+                                totalChecks++;
+
+
+                                addResponseValue(
+                                    reserveTime
+                                );
+
+
+                                updateLastCheck();
+
+
+                                addLog(
+                                    "Резервный сервер успешно " +
+                                    "обслуживает пользовательские запросы.",
+                                    "success"
+                                );
+
+
+                                simulationRunning =
+                                    false;
+
+                            },
+                            700
+                        );
+
+                    }
+
+                },
+                650
+            );
+
+    }
+
+
+    // -----------------------------
+    // Сценарий 2:
+    // нарушение сети
+    // -----------------------------
+
+    function simulateNetworkFailure() {
+
+        if (!mainAvailable) {
+
+            addLog(
+                "Основной сервер уже недоступен.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        totalChecks++;
+
+        failedChecks++;
+
+        mainAvailable =
+            false;
+
+
+        setMainStatus(
+            false
+        );
+
+
+        document.getElementById(
+            "activeServer"
+        ).textContent =
+            "Резервный";
+
+
+        switchCount++;
+
+
+        document.getElementById(
+            "switchCount"
+        ).textContent =
+            switchCount;
+
+
+        addResponseValue(
+            180
+        );
+
+
+        updateLastCheck();
+
+        updateAvailability();
+
+
+        addLog(
+            "Нарушена сетевая доступность основного сервера.",
+            "error"
+        );
+
+
+        addLog(
+            "Health-check не получил ответ от основного сервера.",
+            "error"
+        );
+
+
+        addLog(
+            "Основной экземпляр исключён из обработки запросов.",
+            "warning"
+        );
+
+
+        addLog(
+            "Трафик автоматически перенаправлен на резервный сервер.",
+            "success"
+        );
+
+    }
+
+
+    // -----------------------------
+    // Восстановление
+    // -----------------------------
+
+    function restoreServer() {
+
+        if (mainAvailable) {
+
+            addLog(
+                "Основной сервер уже находится в рабочем состоянии.",
+                "success"
+            );
+
+            return;
+
+        }
+
+
+        mainAvailable =
+            true;
+
+
+        setMainStatus(
+            true
+        );
+
+
+        document.getElementById(
+            "activeServer"
+        ).textContent =
+            "Основной";
+
+
+        const value =
+            Math.floor(
+                Math.random() * 20
+            )
+            + 95;
+
+
+        totalChecks++;
+
+
+        addResponseValue(
+            value
+        );
+
+
+        updateLastCheck();
+
+        updateAvailability();
+
+
+        addLog(
+            "Работоспособность основного сервера восстановлена.",
+            "success"
+        );
+
+
+        addLog(
+            "Основной сервер снова проходит health-check.",
+            "success"
+        );
+
+
+        addLog(
+            "Основной сервер снова назначен активным экземпляром.",
+            "success"
+        );
+
+    }
+
+
+    // -----------------------------
+    // График
+    // -----------------------------
+
+    function drawChart() {
+
+        const canvas =
+            document.getElementById(
+                "responseChart"
+            );
+
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+
+        const dpr =
+            window.devicePixelRatio || 1;
+
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        canvas.width =
+            rect.width * dpr;
+
+
+        canvas.height =
+            rect.height * dpr;
+
+
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+
+        const width =
+            rect.width;
+
+
+        const height =
+            rect.height;
+
+
+        ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+
+        const padding = {
+
+            top: 20,
+
+            right: 22,
+
+            bottom: 35,
+
+            left: 55
+
+        };
+
+
+        const chartWidth =
+            width -
+            padding.left -
+            padding.right;
+
+
+        const chartHeight =
+            height -
+            padding.top -
+            padding.bottom;
+
+
+        const maxValue =
+            Math.max(
+                500,
+                ...responseHistory
+            );
+
+
+        // Сетка
+
+        ctx.strokeStyle =
+            "#243247";
+
+        ctx.lineWidth = 1;
+
+        ctx.font =
+            "11px Arial";
+
+        ctx.fillStyle =
+            "#64748b";
+
+
+        for (
+            let i = 0;
+            i <= 5;
+            i++
+        ) {
+
+            const y =
+                padding.top +
+                chartHeight *
+                i /
+                5;
+
+
+            ctx.beginPath();
+
+
+            ctx.moveTo(
+                padding.left,
+                y
+            );
+
+
+            ctx.lineTo(
+                width -
+                padding.right,
+                y
+            );
+
+
+            ctx.stroke();
+
+
+            const label =
+                Math.round(
+                    maxValue *
+                    (
+                        1 -
+                        i /
+                        5
+                    )
+                );
+
+
+            ctx.fillText(
+                label +
+                " мс",
+                4,
+                y + 4
+            );
+
+        }
+
+
+        // Критический порог 300 мс
+
+        const threshold =
+            300;
+
+
+        const thresholdY =
+            padding.top +
+            chartHeight -
+            (
+                threshold /
+                maxValue
+            )
+            *
+            chartHeight;
+
+
+        ctx.save();
+
+        ctx.setLineDash(
+            [6, 6]
+        );
+
+
+        ctx.strokeStyle =
+            "#ef4444";
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            padding.left,
+            thresholdY
+        );
+
+
+        ctx.lineTo(
+            width -
+            padding.right,
+            thresholdY
+        );
+
+
+        ctx.stroke();
+
+
+        ctx.restore();
+
+
+        ctx.fillStyle =
+            "#fca5a5";
+
+
+        ctx.fillText(
+            "критический порог",
+            width -
+            125,
+            thresholdY - 6
+        );
+
+
+        if (
+            responseHistory.length < 2
+        ) {
+
+            return;
+
+        }
+
+
+        const stepX =
+            chartWidth /
+            (
+                responseHistory.length -
+                1
+            );
+
+
+        // Линия графика
+
+        ctx.beginPath();
+
+
+        responseHistory.forEach(
+            function (
+                value,
+                index
+            ) {
+
+                const x =
+                    padding.left +
+                    stepX *
+                    index;
+
+
+                const y =
+                    padding.top +
+                    chartHeight -
+                    (
+                        value /
+                        maxValue
+                    )
+                    *
+                    chartHeight;
+
+
+                if (
+                    index === 0
+                ) {
+
+                    ctx.moveTo(
+                        x,
+                        y
+                    );
+
+                }
+
+                else {
+
+                    ctx.lineTo(
+                        x,
+                        y
+                    );
+
+                }
+
+            }
+        );
+
+
+        ctx.strokeStyle =
+            "#3b82f6";
+
+
+        ctx.lineWidth =
+            3;
+
+
+        ctx.stroke();
+
+
+        // Точки
+
+        responseHistory.forEach(
+            function (
+                value,
+                index
+            ) {
+
+                const x =
+                    padding.left +
+                    stepX *
+                    index;
+
+
+                const y =
+                    padding.top +
+                    chartHeight -
+                    (
+                        value /
+                        maxValue
+                    )
+                    *
+                    chartHeight;
+
+
+                ctx.beginPath();
+
+
+                ctx.arc(
+                    x,
+                    y,
+                    4,
+                    0,
+                    Math.PI * 2
+                );
+
+
+                if (
+                    value >= 300
+                ) {
+
+                    ctx.fillStyle =
+                        "#ef4444";
+
+                }
+
+                else if (
+                    value >= 180
+                ) {
+
+                    ctx.fillStyle =
+                        "#f59e0b";
+
+                }
+
+                else {
+
+                    ctx.fillStyle =
+                        "#60a5fa";
+
+                }
+
+
+                ctx.fill();
+
+            }
+        );
+
+    }
+
+
+    // -----------------------------
+    // Изменение размера окна
+    // -----------------------------
+
+    window.addEventListener(
+        "resize",
+        drawChart
+    );
+
+
+    // -----------------------------
+    // Запуск
+    // -----------------------------
+
+    addLog(
+        "Система мониторинга запущена.",
+        "success"
+    );
+
+
+    addLog(
+        "Основной сервер доступен.",
+        "success"
+    );
+
+
+    addLog(
+        "Резервный сервер готов к автоматическому переключению.",
+        "success"
+    );
+
+
+    updateLastCheck();
+
+    updateAvailability();
+
+    drawChart();
+
+
+    // Автоматический health-check
+    // каждые 2 секунды
+
+    setInterval(
+        automaticMonitor,
+        2000
+    );
+
+</script>
+
+</body>
+</html>
